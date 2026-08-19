@@ -1,0 +1,141 @@
+{
+  "name": "sysml-ros-transformer-vscode",
+  "displayName": "SysML ↔ ROS Transformer",
+  "description": "VS Code extension for bi-directional SysML v2 and ROS 2 (RosTooling) model transformation",
+  "version": "1.0.0",
+  "publisher": "ipa-esa",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ipa-esa/sysml-ros-transformer-vscode.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ipa-esa/sysml-ros-transformer-vscode/issues"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Other"
+  ],
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onLanguage:sysml",
+    "onLanguage:rossystem",
+    "onCommand:sysml2ros.generateRosSystem",
+    "onCommand:ros2sysml.generateSysML",
+    "onStartupFinished",
+    "workspaceContains:**/*.sysml",
+    "workspaceContains:**/*.rossystem"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "sysml",
+        "aliases": [
+          "SysML",
+          "sysml",
+          "SysML v2"
+        ],
+        "extensions": [
+          ".sysml"
+        ],
+        "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "rossystem",
+        "aliases": [
+          "ROS System",
+          "rossystem"
+        ],
+        "extensions": [
+          ".rossystem"
+        ]
+      }
+    ],
+    "grammars": [
+      {
+        "language": "sysml",
+        "scopeName": "source.sysml",
+        "path": "./syntaxes/sysml.tmLanguage.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "sysml2ros.generateRosSystem",
+        "title": "Generate ROS System (.rossystem)",
+        "category": "SysML ↔ ROS"
+      },
+      {
+        "command": "ros2sysml.generateSysML",
+        "title": "Generate SysML Architecture (.sysml)",
+        "category": "SysML ↔ ROS"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "sysml2ros.generateRosSystem",
+          "group": "7_modification@1",
+          "when": "resourceExtname == '.sysml' || resourceExtname == .sysml || resourceFilename =~ /\\.sysml$/"
+        },
+        {
+          "command": "ros2sysml.generateSysML",
+          "group": "7_modification@1",
+          "when": "resourceExtname == '.rossystem' || resourceExtname == .rossystem || resourceFilename =~ /\\.rossystem$/"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "sysml2ros.generateRosSystem",
+          "group": "7_modification@1",
+          "when": "resourceExtname == '.sysml' || resourceExtname == .sysml || resourceFilename =~ /\\.sysml$/ || editorLangId == 'sysml' || editorLangId == sysml || resourceLangId == 'sysml' || resourceLangId == sysml"
+        },
+        {
+          "command": "ros2sysml.generateSysML",
+          "group": "7_modification@1",
+          "when": "resourceExtname == '.rossystem' || resourceExtname == .rossystem || resourceFilename =~ /\\.rossystem$/ || editorLangId == 'rossystem' || editorLangId == rossystem || resourceLangId == 'rossystem' || resourceLangId == rossystem"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "SysML ↔ ROS Transformer",
+      "properties": {
+        "sysml-ros.outputDirectory": {
+          "type": "string",
+          "default": "src-gen",
+          "description": "Target folder name (relative to workspace) for generated files. Leave empty to generate next to source file."
+        },
+        "sysml-ros.openGeneratedFile": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically open generated files in editor upon transformation completion."
+        },
+        "sysml-ros.java.home": {
+          "type": "string",
+          "default": "",
+          "description": "Absolute path to JDK 17+ or 21+ home directory. Leave empty to use system default Java."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/glob": "^8.1.0",
+    "@types/mocha": "^10.0.6",
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/test-electron": "^2.3.8",
+    "@vscode/vsce": "^2.25.1",
+    "glob": "^8.1.0",
+    "mocha": "^10.3.0",
+    "typescript": "^5.4.0"
+  }
+}

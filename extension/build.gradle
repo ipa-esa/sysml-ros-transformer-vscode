@@ -1,0 +1,86 @@
+plugins {
+    id 'base'
+    id 'com.github.node-gradle.node'
+}
+
+evaluationDependsOn(':transformer-cli')
+
+node {
+    version = '20.20.2'
+    download = false // Uses system Node if available
+}
+
+task copyCliJar(type: Copy) {
+    def shadowJarTask = project(':transformer-cli').tasks.named('shadowJar')
+    dependsOn shadowJarTask
+    from shadowJarTask.get().archiveFile
+    into "${projectDir}/server"
+    rename { 'sysml-ros-transformer-cli.jar' }
+}
+
+def inputFiles = fileTree(
+    dir: projectDir,
+    excludes: [ 'out/**', '.gradle/**', 'build/**', '*.gradle', 'server/**' ]
+)
+
+npmInstall {
+    dependsOn copyCliJar
+    inputs.files(inputFiles)
+    outputs.dir('node_modules')
+}
+
+task compileExtension(type: NpmTask, dependsOn: npmInstall) {
+    args = ['run', 'compile']
+    inputs.files(fileTree(dir: "${projectDir}/src", include: '**/*.ts'))
+    outputs.dir("${projectDir}/out")
+}
+
+task vscodeExtension(type: NodeTask, dependsOn: [copyCliJar, compileExtension]) {
+    def destDir = new File(buildDir, 'vscode')
+    def archiveName = "sysml-ros-transformer-vscode-${project.version}.vsix"
+    def destPath = "${destDir}/${archiveName}"
+
+    inputs.dir("${projectDir}/out")
+    inputs.file("${projectDir}/server/sysml-ros-transformer-cli.jar")
+    inputs.file("${projectDir}/package.json")
+    outputs.file(destPath)
+
+    doFirst {
+        destDir.mkdirs()
+    }
+
+    script = file("${projectDir}/node_modules/@vscode/vsce/vsce")
+    args = ['package', '--no-dependencies', '--out', destPath]
+    execOverrides {
+        workingDir = projectDir
+    }
+}
+
+task installExtension(type: Exec, dependsOn: vscodeExtension) {
+    if (System.properties['os.name'].toLowerCase().contains('windows')) {
+        commandLine 'code.cmd'
+    } else {
+        commandLine 'code'
+    }
+    def vsixFile = file("${buildDir}/vscode/sysml-ros-transformer-vscode-${project.version}.vsix")
+    args '--install-extension', vsixFile.absolutePath, '--force'
+}
+
+task startCode(type: Exec, dependsOn: installExtension) {
+    if (System.properties['os.name'].toLowerCase().contains('windows')) {
+        commandLine 'code.cmd'
+    } else {
+        commandLine 'code'
+    }
+    args "${projectDir}/test-fixtures", '--new-window'
+}
+
+clean {
+    doLast {
+        delete "${projectDir}/server"
+        delete "${projectDir}/out"
+        delete "${projectDir}/build"
+    }
+}
+
+check.dependsOn compileExtension

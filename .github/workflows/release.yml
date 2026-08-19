@@ -1,0 +1,56 @@
+name: Publish Release Artifacts
+
+on:
+  release:
+    types: [ created ]
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  release:
+    name: Build & Release Extension
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      packages: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21 & GitHub Packages Authentication
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          server-id: github-rostooling
+          server-username: GITHUB_ACTOR
+          server-password: GITHUB_TOKEN
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build and Package
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.ROSTOOLING_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          chmod +x ./gradlew
+          ./gradlew build vscodeExtension
+
+      - name: Upload Artifacts to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            extension/build/vscode/*.vsix
+            transformer-cli/build/libs/sysml-ros-transformer-cli-*.jar
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

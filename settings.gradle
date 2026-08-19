@@ -1,0 +1,4 @@
+rootProject.name = 'sysml-ros-transformer-vscode'
+
+include 'transformer-cli'
+include 'extension'

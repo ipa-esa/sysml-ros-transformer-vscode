@@ -1,0 +1,103 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "SysML v2",
+  "scopeName": "source.sysml",
+  "patterns": [
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#strings"
+    },
+    {
+      "include": "#annotations"
+    },
+    {
+      "include": "#keywords"
+    },
+    {
+      "include": "#operators"
+    },
+    {
+      "include": "#types"
+    }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.double-slash.sysml",
+          "match": "//.*$"
+        },
+        {
+          "name": "comment.block.sysml",
+          "begin": "/\\*",
+          "end": "\\*/"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.sysml",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.sysml",
+              "match": "\\\\."
+            }
+          ]
+        }
+      ]
+    },
+    "annotations": {
+      "patterns": [
+        {
+          "name": "entity.name.tag.annotation.ros.sysml",
+          "match": "@(RosArtifactMapping|RosSystemMapping|RosTypeMapping|RosInterfaceMapping|RosInterfaceHint)\\b"
+        },
+        {
+          "name": "entity.name.tag.annotation.sysml",
+          "match": "@[A-Za-z_][A-Za-z0-9_]*"
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.sysml",
+          "match": "\\b(package|import|private|public|from|to|as)\\b"
+        },
+        {
+          "name": "keyword.declaration.sysml",
+          "match": "\\b(part|action|item|port|connection|connect|flow|attribute|enum|def|abstract)\\b"
+        },
+        {
+          "name": "keyword.other.relationship.sysml",
+          "match": "\\b(specializes|subsets|redefines|perform)\\b"
+        },
+        {
+          "name": "keyword.other.direction.sysml",
+          "match": "\\b(in|out|inout|ref)\\b"
+        }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        {
+          "name": "keyword.operator.sysml",
+          "match": "(:>|::|=|;|,|\\.|\\*)"
+        }
+      ]
+    },
+    "types": {
+      "patterns": [
+        {
+          "name": "entity.name.type.sysml",
+          "match": "\\b[A-Z][A-Za-z0-9_]*\\b"
+        }
+      ]
+    }
+  }
+}

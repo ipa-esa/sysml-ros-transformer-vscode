@@ -1,0 +1,38 @@
+plugins {
+    id 'java'
+    id 'com.gradleup.shadow'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+dependencies {
+    // Direct dependencies on Eclipse-based SysML ↔ RosTooling transformer modules
+    implementation 'de.fraunhofer.ipa.ros:de.fraunhofer.ipa.ros.sysml2rostooling:1.0.0-SNAPSHOT'
+    implementation 'de.fraunhofer.ipa.ros:de.fraunhofer.ipa.ros.rostooling2sysml:1.0.0-SNAPSHOT'
+
+    // Xtext / Xtend Runtime library (for Xtend template StringConcatenation)
+    implementation 'org.eclipse.xtend:org.eclipse.xtend.lib:2.39.0'
+    implementation 'org.eclipse.xtext:org.eclipse.xtext.xbase.lib:2.39.0'
+
+    // Testing
+    testImplementation platform('org.junit:junit-bom:5.10.2')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+shadowJar {
+    archiveBaseName.set('sysml-ros-transformer-cli')
+    archiveClassifier.set('')
+    archiveVersion.set(project.version.toString())
+    mergeServiceFiles()
+    manifest {
+        attributes 'Main-Class': 'de.fraunhofer.ipa.ros.sysml.cli.SysMLRosTransformerCli'
+    }
+}

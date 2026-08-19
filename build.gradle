@@ -1,0 +1,51 @@
+plugins {
+    id 'base'
+    id 'com.github.node-gradle.node' version '7.1.0' apply false
+    id 'com.gradleup.shadow' version '8.3.6' apply false
+}
+
+allprojects {
+    group = 'de.fraunhofer.ipa.ros'
+    version = '1.0.0'
+
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        gradlePluginPortal()
+        
+        // GitHub Packages Registry for sysml-ros-transformer
+        maven {
+            name = "GitHubPackagesSysmlTransformer"
+            url = uri("https://maven.pkg.github.com/ipa-esa/sysml-ros-transformer")
+            credentials {
+                username = project.findProperty("gpr.user") ?: System.getenv("USERNAME") ?: System.getenv("GITHUB_ACTOR")
+                password = project.findProperty("gpr.key") ?: System.getenv("TOKEN") ?: System.getenv("GITHUB_TOKEN")
+            }
+        }
+
+        // GitHub Packages Registry for RosTooling
+        maven {
+            name = "GitHubPackagesRosTooling"
+            url = uri("https://maven.pkg.github.com/ipa-esa/RosTooling")
+            credentials {
+                username = project.findProperty("gpr.user") ?: System.getenv("USERNAME") ?: System.getenv("GITHUB_ACTOR")
+                password = project.findProperty("gpr.key") ?: System.getenv("TOKEN") ?: System.getenv("GITHUB_TOKEN")
+            }
+        }
+    }
+}
+
+task vscodeExtension(dependsOn: ':extension:vscodeExtension') {
+    group = 'build'
+    description = 'Builds both the Java CLI Fat JAR and the packaged VS Code extension (.vsix)'
+}
+
+task installExtension(dependsOn: ':extension:installExtension') {
+    group = 'build'
+    description = 'Builds and installs the packaged .vsix extension into local VS Code'
+}
+
+task startCode(dependsOn: ':extension:startCode') {
+    group = 'application'
+    description = 'Installs extension and opens test-fixtures in a new VS Code window'
+}
