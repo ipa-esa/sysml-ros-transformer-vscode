@@ -1,0 +1,13 @@
+.vscode/**
+.vscode-test/**
+src/**
+tsconfig.json
+.eslintrc.json
+eslint.config.mjs
+*.map
+.gitignore
+build.gradle
+.gradle/**
+build/**
+node_modules/**
+!server/sysml-ros-transformer-cli.jar
