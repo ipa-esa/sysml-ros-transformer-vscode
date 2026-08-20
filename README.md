@@ -1,5 +1,6 @@
 # SysML ↔ ROS Model Transformer — VS Code Extension
 [![Build & Package SysML ↔ ROS VS Code Extension](https://github.com/ipa-esa/sysml-ros-transformer-vscode/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ipa-esa/sysml-ros-transformer-vscode/actions/workflows/ci.yml)
+![Funded by the European Union](extension/images/EU_funded_en.jpg)
 
 A lightweight, high-performance Visual Studio Code extension for bi-directional model-to-model (M2M) transformations between **SysML v2** cognitive architecture models and **RosTooling** (`.rossystem`) models.
 
