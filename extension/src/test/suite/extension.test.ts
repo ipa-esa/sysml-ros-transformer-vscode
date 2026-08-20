@@ -4,6 +4,12 @@ import * as vscode from 'vscode';
 suite('SysML ↔ ROS Transformer Extension Test Suite', () => {
     vscode.window.showInformationMessage('Start all tests.');
 
+    suiteSetup(async () => {
+        const ext = vscode.extensions.getExtension('ipa-esa.sysml-ros-transformer-vscode');
+        assert.ok(ext, 'Extension ipa-esa.sysml-ros-transformer-vscode should be found');
+        await ext.activate();
+    });
+
     test('Extension should register commands', async () => {
         const allCommands = await vscode.commands.getCommands(true);
 
@@ -25,3 +31,4 @@ suite('SysML ↔ ROS Transformer Extension Test Suite', () => {
         assert.strictEqual(config.get('java.home'), '');
     });
 });
+
