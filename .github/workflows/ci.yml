@@ -44,6 +44,11 @@ jobs:
         run: |
           chmod +x ./gradlew
           ./gradlew build vscodeExtension --info
+      
+      - name: Run VS Code Extension Tests
+        run: |
+          cd extension
+          xvfb-run -a npm run test
 
       - name: Upload VS Code Extension (.vsix)
         uses: actions/upload-artifact@v4
