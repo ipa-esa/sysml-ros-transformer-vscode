@@ -54,17 +54,48 @@ sysml-ros-transformer-vscode/
 
 ## Installation
 
-### Option 1: Install Pre-built `.vsix` from GitHub Actions / Releases
+You can install the pre-packaged `.vsix` extension directly without needing to build from source.
 
-1. Download the latest `sysml-ros-transformer-vscode-1.0.0.vsix` from the GitHub Actions Artifacts or Releases page.
-2. In VS Code, open the Extensions view (`Ctrl+Shift+X` / `Cmd+Shift+X`).
-3. Click the **`...`** (Views and More Actions) menu in the top-right corner of the Extensions pane.
-4. Select **Install from VSIX...** and choose the downloaded file.
+### 1. Download the `.vsix` Package
 
-Alternatively, from the command line:
+- **GitHub Releases (Recommended)**: Download `sysml-ros-transformer-vscode-*.vsix` attached to the latest release on the [GitHub Releases](https://github.com/ipa-esa/sysml-ros-transformer-vscode/releases) page.
+- **GitHub Actions CI Artifacts**: For the latest development builds:
+  1. Go to the [GitHub Actions](https://github.com/ipa-esa/sysml-ros-transformer-vscode/actions/workflows/ci.yml) tab.
+  2. Click on the latest successful workflow run on `main` or your branch.
+  3. Scroll down to the **Artifacts** section and download `sysml-ros-transformer-vscode` (extract the `.zip` archive to obtain the `.vsix` file).
+
+---
+
+### 2. Install into VS Code
+
+#### Method A: Graphical Interface (GUI)
+
+Works in **VS Code**, **VSCodium**, **Cursor**, **Eclipse Theia**, **Windsurf**, and other VS Code distributions:
+
+1. Open your editor.
+2. Open the **Extensions** view (`Ctrl+Shift+X` / `Cmd+Shift+X` or click the Extensions icon in the Activity Bar).
+3. Click the **`···`** (Views and More Actions) menu in the top-right corner of the Extensions pane.
+4. Select **Install from VSIX...** and select the downloaded `.vsix` file.
+
+> **Tip:** Alternatively, open the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`), type **`Extensions: Install from VSIX...`**, press Enter, and choose the `.vsix` file.
+
+#### Method B: Command Line Interface (CLI)
+
+Run the command corresponding to your editor from the terminal:
+
 ```bash
+# Visual Studio Code
 code --install-extension sysml-ros-transformer-vscode-1.0.0.vsix
 ```
+
+>***Note:*** This plugin can be installed in other forks of VS Code, for example **VSCodium**, **Cursor**, **Antigravity**, etc. However, the extension has **only** been tested on VS Code and Antigravity.
+---
+
+### 3. Verify Installation
+
+1. Verify that **SysML ↔ ROS Transformer** appears in your editor under **Installed Extensions**.
+2. Ensure a compatible Java Runtime (JDK 17 or JDK 21) is installed on your machine.
+3. Open any `.sysml` or `.rossystem` model file; right-click in the editor or Explorer to access the transformation commands.
 
 ---
 
