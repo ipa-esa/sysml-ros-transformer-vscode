@@ -85,7 +85,7 @@ Run the command corresponding to your editor from the terminal:
 
 ```bash
 # Visual Studio Code
-code --install-extension sysml-ros-transformer-vscode-1.0.0.vsix
+code --install-extension sysml-ros-transformer-vscode-1.0.1.vsix
 ```
 
 >***Note:*** This plugin can be installed in other forks of VS Code, for example **VSCodium**, **Cursor**, **Antigravity**, etc. However, the extension has **only** been tested on VS Code and Antigravity.
@@ -115,12 +115,12 @@ To build both the standalone Java CLI and package the VS Code `.vsix` extension:
 
 The compiled extension `.vsix` will be located at:
 ```
-extension/build/vscode/sysml-ros-transformer-vscode-1.0.0.vsix
+extension/build/vscode/sysml-ros-transformer-vscode-1.0.1.vsix
 ```
 
 The standalone CLI Fat JAR will be located at:
 ```
-transformer-cli/build/libs/sysml-ros-transformer-cli-1.0.0.jar
+transformer-cli/build/libs/sysml-ros-transformer-cli-1.0.1.jar
 ```
 
 ---
@@ -157,12 +157,12 @@ The bundled CLI can also be run directly from any terminal or CI script:
 
 ```bash
 # Forward transformation: SysML -> .rossystem
-java -jar transformer-cli/build/libs/sysml-ros-transformer-cli-1.0.0.jar \
+java -jar transformer-cli/build/libs/sysml-ros-transformer-cli-1.0.1.jar \
   --forward path/to/model.sysml \
   --output src-gen/
 
 # Reverse transformation: .rossystem -> SysML
-java -jar transformer-cli/build/libs/sysml-ros-transformer-cli-1.0.0.jar \
+java -jar transformer-cli/build/libs/sysml-ros-transformer-cli-1.0.1.jar \
   --reverse path/to/system.rossystem \
   --ros2 path/to/nodes.ros2 \
   --output src-gen/
@@ -175,10 +175,58 @@ java -jar transformer-cli/build/libs/sysml-ros-transformer-cli-1.0.0.jar \
 - **Continuous Integration (`.github/workflows/ci.yml`)**:
   - Automatically compiles the Java CLI wrapper.
   - Runs JUnit 5 integration tests against SysML and RosSystem test fixtures.
-  - Compiles the TypeScript extension and packages `sysml-ros-transformer-vscode-1.0.0.vsix`.
+  - Compiles the TypeScript extension and packages `sysml-ros-transformer-vscode-1.0.1.vsix`.
   - Publishes both the `.vsix` extension package and the CLI `.jar` as downloadable build artifacts on every push and pull request.
 - **Automated Releases (`.github/workflows/release.yml`)**:
   - Automatically attaches the `.vsix` installer and standalone CLI JAR to GitHub Releases upon tag creation (`v*`).
+
+---
+
+## Changelog
+
+### [1.0.1] - 2026-09-03
+
+- **Backend CLI Updates (`SysMLRosTransformerCli.java`)**:
+  - **Multi-File & Workspace Support**: Added support for passing multiple companion model files (`--models`, `--sysml <files...>`) and workspace paths (`--workspace <dir>`).
+  - **Recursive Discovery**: Implemented recursive workspace and directory file discovery for `.sysml` and `.ros2`/`.ros` files.
+  - **Strict Selective Output Guarantee**: In forward mode, all workspace `.sysml` files are parsed into the unified `SysMLModel`, but `transformer.transform(model, inputFile.getAbsolutePath())` filters strictly for the root annotated with `@RosSystemMapping` inside only the selected target file. Any other systems in the workspace are ignored for generation.
+  - **Unified ROS 2 Resolution**: In reverse mode, all `.ros2` and `.ros` files across the project tree are combined into a unified model for full ROS 2 type resolution.
+- **Extension Runner Updates (`transformerRunner.ts` & `extension.ts`)**:
+  - **Automatic Workspace Discovery**:
+    - In forward mode: automatically discovers all workspace `.sysml` files via `vscode.workspace.findFiles` and passes them to the CLI along with the workspace directory.
+    - In reverse mode: automatically discovers all workspace `.ros2` and `.ros` files and passes them to the CLI.
+  - **Harness Inspection**: Exported `ExtensionApi` from `activate()` for test harness inspection.
+- **Automated Test Suites**:
+  - **JUnit 5 CLI Backend Tests (`SysMLRosTransformerCliTest.java`)**:
+    - Tested multi-file SysML parsing (`multi_system.sysml` referencing `multi_components.sysml`).
+    - Verified that unrelated system models in the same directory (`unrelated_system.sysml`) are not generated.
+    - Tested multi-file ROS 2 reverse transformation.
+  - **VS Code Extension Integration Tests (`extension.test.ts`)**:
+    - Runs directly inside the VS Code Electron test runner.
+    - Verifies command registration and default configuration.
+    - Verifies Java runtime detection via `TransformerRunner`.
+    - Executes `sysml2ros.generateRosSystem` and confirms `.rossystem` generation with cross-file resolution and selective output filtering.
+    - Executes `ros2sysml.generateSysML` and confirms reverse transformation with ROS 2 models.
+- **Gradle & Build Integration**:
+  - Added `testExtension` task to `extension/build.gradle` wired to `check.dependsOn testExtension`.
+  - Bumped project version to `1.0.1` across root Gradle build, standalone Java CLI, and VS Code extension manifest.
+
+### [1.0.0] - Initial Release
+
+- **Initial release** of the SysML ↔ ROS Transformer VS Code extension and standalone Java CLI.
+- **Bi-directional transformations**:
+  - **Forward Transformation (SysML v2 $\to$ RosTooling)**: Generates `.rossystem` models from `.sysml` files with full support for `@Ros*` bridge metadata annotations (`@RosArtifactMapping`, `@RosSystemMapping`, `@RosTypeMapping`, `@RosInterfaceMapping`, `@RosInterfaceHint`).
+  - **Reverse Transformation (RosTooling $\to$ SysML v2)**: Converts `.rossystem` models and `.ros2` node definitions into SysML v2 models importing `CSCore` and `CSRosBridge` with complete cognitive triad structures (`Modelet`, `Engine`, `Exert`).
+- **VS Code Extension Features**:
+  - Context menu integration for `.sysml` and `.rossystem` files in File Explorer and Editor.
+  - Dedicated TextMate syntax highlighting for SysML v2 and CoreSense ROS bridge annotations.
+  - Streaming output channel for real-time transformation logging and feedback.
+  - Interactive notification prompts to open generated models immediately.
+  - Configurable settings for output directories, auto-open behavior, and custom JDK path.
+- **Standalone Java CLI**:
+  - Standalone Shadow Fat JAR for command-line and automated execution without OSGi / Eclipse desktop overhead.
+- **CI/CD Integration**:
+  - GitHub Actions workflows for automated build, JUnit test validation, packaging, and release artifact distribution.
 
 ---
 

@@ -2,7 +2,7 @@
   "name": "sysml-ros-transformer-vscode",
   "displayName": "SysML ↔ ROS Transformer",
   "description": "VS Code extension for bi-directional SysML v2 and ROS 2 (RosTooling) model transformation",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "publisher": "ipa-esa",
   "icon": "images/icon.png",
   "license": "Apache-2.0",

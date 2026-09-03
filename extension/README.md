@@ -50,6 +50,21 @@ This extension contributes the following settings (`Ctrl+,` / `Cmd+,` $\to$ sear
 
 ## Release Notes
 
+### 1.0.1
+
+* **Backend CLI Enhancements (`SysMLRosTransformerCli.java`)**:
+  * Added multi-file and workspace companion model arguments (`--models`, `--sysml <files...>`, `--workspace <dir>`).
+  * Implemented recursive directory discovery for `.sysml` and `.ros2`/`.ros` files.
+  * **Strict Selective Output Guarantee**: In forward mode, parses all workspace `.sysml` files into a unified model while filtering generation strictly for the selected file containing `@RosSystemMapping`.
+  * In reverse mode, recursively collects all workspace `.ros2` and `.ros` files to construct a unified model for full ROS 2 type resolution.
+* **Extension Runner Enhancements (`transformerRunner.ts` & `extension.ts`)**:
+  * Automatic workspace file discovery via `vscode.workspace.findFiles` for both forward (`.sysml`) and reverse (`.ros2`/`.ros`) modes.
+  * Exported `ExtensionApi` from `activate()` for automated test harness inspection.
+* **Automated Test Suites & Quality Assurance**:
+  * **JUnit 5 CLI Backend Tests**: Validates cross-file model resolution, selective system output filtering, and multi-file reverse transformations.
+  * **VS Code Extension Integration Tests**: Electron-based integration suite verifying command execution, Java detection, and end-to-end model generation.
+  * **Gradle Integration**: Added `testExtension` task bound to `check.dependsOn testExtension`.
+
 ### 1.0.0
 
 * **Initial release** of the SysML ↔ ROS Transformer extension.

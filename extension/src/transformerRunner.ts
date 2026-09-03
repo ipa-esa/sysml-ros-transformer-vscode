@@ -36,7 +36,7 @@ export class TransformerRunner {
                 'transformer-cli',
                 'build',
                 'libs',
-                'sysml-ros-transformer-cli-1.0.0.jar'
+                'sysml-ros-transformer-cli-1.0.1.jar'
             );
             if (fs.existsSync(devJarPath)) {
                 return devJarPath;
