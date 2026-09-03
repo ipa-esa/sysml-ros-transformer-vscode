@@ -8,10 +8,16 @@ package de.fraunhofer.ipa.ros.sysml.cli;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import de.fraunhofer.ipa.ros.sysml2rostooling.parser.SysMLParser;
 import de.fraunhofer.ipa.ros.sysml2rostooling.parser.model.SysMLModel;
@@ -25,6 +31,7 @@ import de.fraunhofer.ipa.ros.rostooling2sysml.generator.SysMLTextGenerator;
 
 /**
  * Standalone Command-Line Interface for Bi-directional SysML ↔ RosTooling Transformations.
+ * Supports multi-file SysML parsing and project-wide ROS 2 model discovery.
  */
 public class SysMLRosTransformerCli {
 
@@ -45,7 +52,9 @@ public class SysMLRosTransformerCli {
 
         String mode = null; // "forward" or "reverse"
         String inputFile = null;
-        String ros2File = null;
+        List<String> extraSysmlFiles = new ArrayList<>();
+        List<String> ros2Files = new ArrayList<>();
+        String workspaceDir = null;
         String outputDir = null;
         boolean toStdout = false;
 
@@ -74,9 +83,21 @@ public class SysMLRosTransformerCli {
                         inputFile = args[++i];
                     }
                     break;
+                case "--sysml":
+                case "--models":
+                    while (i + 1 < args.length && !args[i + 1].startsWith("-")) {
+                        extraSysmlFiles.add(args[++i]);
+                    }
+                    break;
                 case "--ros2":
+                    while (i + 1 < args.length && !args[i + 1].startsWith("-")) {
+                        ros2Files.add(args[++i]);
+                    }
+                    break;
+                case "-w":
+                case "--workspace":
                     if (i + 1 < args.length && !args[i + 1].startsWith("-")) {
-                        ros2File = args[++i];
+                        workspaceDir = args[++i];
                     }
                     break;
                 case "-o":
@@ -130,9 +151,9 @@ public class SysMLRosTransformerCli {
 
         try {
             if ("forward".equalsIgnoreCase(mode)) {
-                return executeForward(inFile, outputDir, toStdout);
+                return executeForward(inFile, extraSysmlFiles, workspaceDir, outputDir, toStdout);
             } else if ("reverse".equalsIgnoreCase(mode)) {
-                return executeReverse(inFile, ros2File, outputDir, toStdout);
+                return executeReverse(inFile, ros2Files, workspaceDir, outputDir, toStdout);
             } else {
                 System.err.println("[ERROR] Invalid mode: " + mode);
                 return 1;
@@ -144,15 +165,40 @@ public class SysMLRosTransformerCli {
         }
     }
 
-    private static int executeForward(File inputFile, String outputDir, boolean toStdout) throws IOException {
-        SysMLParser parser = new SysMLParser();
-        SysMLModel model = parser.parse(List.of(inputFile.getAbsolutePath()));
+    private static int executeForward(File inputFile, List<String> extraSysmlFiles, String workspaceDir,
+                                      String outputDir, boolean toStdout) throws IOException {
+        Set<String> allSysmlFiles = new LinkedHashSet<>();
+        allSysmlFiles.add(inputFile.getAbsolutePath());
 
+        // Add explicitly specified companion files
+        for (String extra : extraSysmlFiles) {
+            File f = new File(extra);
+            if (f.exists() && f.isFile() && extra.endsWith(".sysml")) {
+                allSysmlFiles.add(f.getAbsolutePath());
+            }
+        }
+
+        // Discover companion .sysml files in workspace or parent directory if needed
+        File searchRoot = (workspaceDir != null && !workspaceDir.isBlank())
+                ? new File(workspaceDir)
+                : inputFile.getParentFile();
+
+        if (searchRoot != null && searchRoot.exists()) {
+            List<String> discovered = discoverFiles(searchRoot, ".sysml");
+            allSysmlFiles.addAll(discovered);
+        }
+
+        System.out.println("[INFO] Parsing " + allSysmlFiles.size() + " SysML file(s) for model resolution.");
+
+        SysMLParser parser = new SysMLParser();
+        SysMLModel model = parser.parse(new ArrayList<>(allSysmlFiles));
+
+        // Transform ONLY the system defined in the selected inputFile
         SysML2RosSystemTransformer transformer = new SysML2RosSystemTransformer();
-        List<RosSystemResult> results = transformer.transform(model);
+        List<RosSystemResult> results = transformer.transform(model, inputFile.getAbsolutePath());
 
         if (results.isEmpty()) {
-            System.err.println("[WARNING] No systems found in SysML model.");
+            System.err.println("[WARNING] No @RosSystemMapping found in selected SysML file: " + inputFile.getName());
             return 0;
         }
 
@@ -184,30 +230,44 @@ public class SysMLRosTransformerCli {
         return 0;
     }
 
-    private static int executeReverse(File inputFile, String ros2FilePath, String outputDir, boolean toStdout) throws IOException {
+    private static int executeReverse(File inputFile, List<String> ros2Files, String workspaceDir,
+                                      String outputDir, boolean toStdout) throws IOException {
         String rossystemContent = Files.readString(inputFile.toPath(), StandardCharsets.UTF_8);
-        String ros2Content = null;
 
-        if (ros2FilePath != null && !ros2FilePath.isBlank()) {
-            File ros2File = new File(ros2FilePath);
-            if (ros2File.exists() && ros2File.isFile()) {
-                ros2Content = Files.readString(ros2File.toPath(), StandardCharsets.UTF_8);
-            } else {
-                System.err.println("[WARNING] Specified .ros2 file not found: " + ros2FilePath);
-            }
-        } else {
-            // Check for adjacent or nearby .ros2 files in parent or siblings
-            File parentDir = inputFile.getParentFile();
-            if (parentDir != null) {
-                File[] matchingRos2 = parentDir.listFiles((dir, name) -> name.endsWith(".ros2"));
-                if (matchingRos2 != null && matchingRos2.length > 0) {
-                    ros2Content = Files.readString(matchingRos2[0].toPath(), StandardCharsets.UTF_8);
-                }
+        Set<String> allRosModelFiles = new LinkedHashSet<>();
+
+        // Add explicitly specified ROS model files
+        for (String r2 : ros2Files) {
+            File f = new File(r2);
+            if (f.exists() && f.isFile()) {
+                allRosModelFiles.add(f.getAbsolutePath());
             }
         }
 
+        // Discover all .ros2 and .ros files in workspace or parent directory
+        File searchRoot = (workspaceDir != null && !workspaceDir.isBlank())
+                ? new File(workspaceDir)
+                : (inputFile.getParentFile() != null ? inputFile.getParentFile() : new File("."));
+
+        if (searchRoot.exists()) {
+            List<String> discovered = discoverFiles(searchRoot, ".ros2", ".ros");
+            allRosModelFiles.addAll(discovered);
+        }
+
+        // Combine contents of all discovered ROS model files
+        StringBuilder ros2Combined = new StringBuilder();
+        for (String modelPath : allRosModelFiles) {
+            try {
+                ros2Combined.append(Files.readString(Paths.get(modelPath), StandardCharsets.UTF_8)).append("\n");
+            } catch (Exception ignored) {}
+        }
+
+        if (!allRosModelFiles.isEmpty()) {
+            System.out.println("[INFO] Loaded " + allRosModelFiles.size() + " ROS 2 / ROS model file(s) for type resolution.");
+        }
+
         RosSystem2SysMLTransformer transformer = new RosSystem2SysMLTransformer();
-        SysMLResult result = transformer.transformText(rossystemContent, ros2Content);
+        SysMLResult result = transformer.transformText(rossystemContent, ros2Combined.toString());
 
         SysMLTextGenerator generator = new SysMLTextGenerator();
         CharSequence generatedText = generator.generate(result);
@@ -235,22 +295,63 @@ public class SysMLRosTransformerCli {
         return 0;
     }
 
+    /**
+     * Recursively discovers files matching given extensions while skipping build, dot, and dependency folders.
+     */
+    public static List<String> discoverFiles(File searchDir, String... extensions) {
+        List<String> results = new ArrayList<>();
+        if (searchDir == null || !searchDir.exists() || !searchDir.isDirectory()) {
+            return results;
+        }
+
+        try {
+            Files.walkFileTree(searchDir.toPath(), new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+                    String name = dir.getFileName() != null ? dir.getFileName().toString() : "";
+                    if (name.startsWith(".") || "build".equals(name) || "target".equals(name)
+                            || "bin".equals(name) || "node_modules".equals(name) || "out".equals(name)
+                            || "dist".equals(name)) {
+                        return FileVisitResult.SKIP_SUBTREE;
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+                    String fileName = file.getFileName().toString();
+                    for (String ext : extensions) {
+                        if (fileName.endsWith(ext)) {
+                            results.add(file.toAbsolutePath().toString());
+                            break;
+                        }
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        } catch (IOException ignored) {}
+
+        return results;
+    }
+
     private static void printHelp() {
         System.out.println("SysML ↔ ROS Model Transformer CLI (Approach A)");
         System.out.println("Usage:");
         System.out.println("  java -jar sysml-ros-transformer-cli.jar [options]");
         System.out.println();
         System.out.println("Options:");
-        System.out.println("  -f, --forward <file.sysml>       Perform forward transformation (SysML -> .rossystem)");
-        System.out.println("  -r, --reverse <file.rossystem>   Perform reverse transformation (.rossystem -> SysML)");
-        System.out.println("      --ros2 <file.ros2>           Optional .ros2 model for reverse transformation type resolution");
+        System.out.println("  -f, --forward <file.sysml>       Target SysML model file to transform (.sysml -> .rossystem)");
+        System.out.println("  -r, --reverse <file.rossystem>   Target RosSystem model file to transform (.rossystem -> SysML)");
+        System.out.println("      --models, --sysml <files...> Additional companion .sysml files for cross-file resolution");
+        System.out.println("      --ros2 <files...>            .ros2 / .ros model files for reverse transformation type resolution");
+        System.out.println("  -w, --workspace <directory>      Workspace root directory for automatic model discovery");
         System.out.println("  -o, --output <directory>         Target directory for output files (default: adjacent)");
         System.out.println("      --stdout                     Output generated text directly to stdout");
         System.out.println("  -v, --version                    Display version information");
         System.out.println("  -h, --help                       Show this help message");
         System.out.println();
         System.out.println("Examples:");
-        System.out.println("  sysml-ros-transformer-cli --forward path/to/model.sysml -o src-gen/");
-        System.out.println("  sysml-ros-transformer-cli --reverse path/to/system.rossystem --ros2 path/to/nodes.ros2 -o src-gen/");
+        System.out.println("  sysml-ros-transformer-cli --forward system.sysml --models components.sysml -o src-gen/");
+        System.out.println("  sysml-ros-transformer-cli --reverse system.rossystem --ros2 nodes.ros2 -o src-gen/");
     }
 }

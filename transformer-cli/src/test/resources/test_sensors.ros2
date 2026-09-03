@@ -1,0 +1,5 @@
+camera_driver:
+  node: camera_node
+  publishers:
+    image_raw:
+      type: sensor_msgs/msg/Image

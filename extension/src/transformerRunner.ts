@@ -130,10 +130,42 @@ export class TransformerRunner {
         const args: string[] = ['-jar', jarPath];
         if (options.mode === 'forward') {
             args.push('--forward', inputFilePath);
+
+            // Discover companion .sysml files in workspace
+            const sysmlFiles = await vscode.workspace.findFiles(
+                '**/*.sysml',
+                '{**/node_modules/**,**/dist/**,**/out/**,**/build/**,**/target/**}'
+            );
+            const companionFiles = sysmlFiles
+                .map(uri => uri.fsPath)
+                .filter(p => path.resolve(p) !== path.resolve(inputFilePath));
+
+            if (companionFiles.length > 0) {
+                args.push('--models', ...companionFiles);
+            }
+            if (workspaceFolder) {
+                args.push('--workspace', workspaceFolder.uri.fsPath);
+            }
         } else {
             args.push('--reverse', inputFilePath);
+
+            // Discover all .ros2 and .ros files in workspace
+            const rosFiles = await vscode.workspace.findFiles(
+                '**/*.{ros2,ros}',
+                '{**/node_modules/**,**/dist/**,**/out/**,**/build/**,**/target/**}'
+            );
+            const rosFilePaths = new Set<string>();
             if (options.ros2Uri) {
-                args.push('--ros2', options.ros2Uri.fsPath);
+                rosFilePaths.add(options.ros2Uri.fsPath);
+            }
+            for (const file of rosFiles) {
+                rosFilePaths.add(file.fsPath);
+            }
+            if (rosFilePaths.size > 0) {
+                args.push('--ros2', ...Array.from(rosFilePaths));
+            }
+            if (workspaceFolder) {
+                args.push('--workspace', workspaceFolder.uri.fsPath);
             }
         }
         args.push('--output', targetOutputDir);

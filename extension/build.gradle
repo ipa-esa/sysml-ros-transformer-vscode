@@ -83,4 +83,10 @@ clean {
     }
 }
 
-check.dependsOn compileExtension
+task testExtension(type: NpmTask, dependsOn: [compileExtension, copyCliJar]) {
+    args = ['test']
+    inputs.files(fileTree(dir: "${projectDir}/src", include: '**/*.ts'))
+    inputs.file("${projectDir}/server/sysml-ros-transformer-cli.jar")
+}
+
+check.dependsOn testExtension

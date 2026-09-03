@@ -1,0 +1,5 @@
+lidar_driver:
+  node: lidar_node
+  publishers:
+    scan:
+      type: sensor_msgs/msg/LaserScan

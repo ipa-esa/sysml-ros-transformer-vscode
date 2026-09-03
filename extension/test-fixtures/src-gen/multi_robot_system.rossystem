@@ -1,0 +1,6 @@
+multi_robot_system:
+  nodes:
+    "lidar":
+      from: "robot_drivers.lidar_driver"
+      interfaces:
+        - "lidar_scan": pub-> "lidar_driver::scan"

@@ -6,7 +6,12 @@
 import * as vscode from 'vscode';
 import { TransformerRunner } from './transformerRunner';
 
-export function activate(context: vscode.ExtensionContext) {
+export interface ExtensionApi {
+    runner: TransformerRunner;
+    context: vscode.ExtensionContext;
+}
+
+export function activate(context: vscode.ExtensionContext): ExtensionApi {
     console.log('[SysML ↔ ROS Transformer] Activating extension...');
     const outputChannel = vscode.window.createOutputChannel('SysML ↔ ROS Transformer');
     context.subscriptions.push(outputChannel);
@@ -59,6 +64,7 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(reverseCmd);
 
     outputChannel.appendLine('SysML ↔ ROS Transformer extension is now active.');
+    return { runner, context };
 }
 
 export function deactivate() {
