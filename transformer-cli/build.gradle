@@ -11,8 +11,8 @@ java {
 
 dependencies {
     // Direct dependencies on Eclipse-based SysML ↔ RosTooling transformer modules
-    implementation 'de.fraunhofer.ipa.ros:de.fraunhofer.ipa.ros.sysml2rostooling:1.0.0-SNAPSHOT'
-    implementation 'de.fraunhofer.ipa.ros:de.fraunhofer.ipa.ros.rostooling2sysml:1.0.0-SNAPSHOT'
+    implementation 'de.fraunhofer.ipa.ros:de.fraunhofer.ipa.ros.sysml2rostooling:1.0.1'
+    implementation 'de.fraunhofer.ipa.ros:de.fraunhofer.ipa.ros.rostooling2sysml:1.0.1'
 
     // Xtext / Xtend Runtime library (for Xtend template StringConcatenation)
     implementation 'org.eclipse.xtend:org.eclipse.xtend.lib:2.39.0'
