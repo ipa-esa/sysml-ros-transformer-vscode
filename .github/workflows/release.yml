@@ -44,7 +44,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.ROSTOOLING_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
           chmod +x ./gradlew
-          ./gradlew build vscodeExtension
+          xvfb-run -a ./gradlew build vscodeExtension
 
       - name: Upload Artifacts to GitHub Release
         uses: softprops/action-gh-release@v2
